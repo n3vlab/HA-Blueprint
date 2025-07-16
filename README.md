@@ -12,8 +12,8 @@ this automation triggers **when it turns off**. After a short delay, it switches
 
 ### ⚙️ Features
 
-- ⏱️ Minimum runtime check (최소 동작 시간 체크)
-- ⏳ Delay after shutdown (종료 후 지연)
+- ⏱️ Minimum runtime check (최소 동작 시간 체크 - 잠깐 켰을때는 건조가 필요없기 때문)
+- ⏳ Delay after shutdown (종료 후 지연 - 실수로 OFF 시켰을때 동작하지 않도록)
 - 🌪️ Fan-only mode with high speed (송풍 + 강풍 모드)
-- ⌛ Auto stop after duration (시간 경과 후 자동 꺼짐)
-- ✅ 마지막 상태 확인 후 종료 (fan_only 상태일 때만 종료)
+- ⌛ Auto stop after duration (일정 시간 경과 후 자동 꺼짐)
+- ✅ 마지막 상태 확인 후 종료 (fan_only 상태일 때만 종료 - 송풍 건조 중 모드 변경시 꺼지지 않도록)
