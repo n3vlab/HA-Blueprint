@@ -1,7 +1,5 @@
 # 🏠 HA-Blueprint  
-📁 *My Personal Home Assistant Blueprint Repository*
-
-
+*My Personal Home Assistant Blueprint Repository*
 
 ## 🌬️ Auto Dry Mode After AC Shutdown
 
