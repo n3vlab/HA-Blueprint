@@ -1,0 +1,131 @@
+blueprint:
+  name: Auto Dry Mode After AC Shutdown / 에어컨 종료 후 자동 건조 모드
+  description: >
+    After the selected air conditioner has been running for a configured minimum duration,
+    this automation triggers when it turns off. After a short delay, it switches the AC to 
+    fan-only mode at high speed for a configured time, then turns it off automatically.
+
+    선택한 에어컨이 설정된 최소 시간 이상 동작한 후 꺼지면,
+    약간의 지연 후 송풍 강풍 모드로 전환되고 지정된 시간 동안 작동한 뒤 자동으로 꺼집니다.
+
+  domain: automation
+
+  input:
+    target_ac:
+      name: Target Air Conditioner / 대상 에어컨
+      description: >
+        The climate entity to apply this automation to.
+        
+        자동화를 적용할 에어컨(climate) 엔티티를 선택하세요.
+      selector:
+        entity:
+          domain: climate
+
+    runtime_minutes:
+      name: Minimum Run Time (minutes) / 최소 작동 시간 (분)
+      description: >
+        The air conditioner must have been running for at least this many minutes to trigger the automation.
+        
+        자동화가 작동하려면 에어컨이 최소 이 시간 이상 동작해야 합니다.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 180
+          unit_of_measurement: minutes
+          mode: slider
+
+    post_off_delay:
+      name: Delay After Turn-Off (seconds) / 꺼진 후 대기 시간 (초)
+      description: >
+        How long to wait after the AC turns off before triggering the automation.
+        
+        에어컨이 꺼진 후 자동화를 시작하기 전까지 기다릴 시간입니다.
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: seconds
+          mode: slider
+
+    wind_duration:
+      name: Fan-Only Duration (minutes) / 송풍 작동 시간 (분)
+      description: >
+        How long to keep the AC in fan-only mode after shutdown.
+        
+        에어컨이 꺼진 후 송풍 모드로 유지할 시간입니다.
+      default: 60
+      selector:
+        number:
+          min: 1
+          max: 180
+          unit_of_measurement: minutes
+          mode: slider
+
+    command_gap:
+      name: Delay Between Commands (seconds) / 명령 간 지연 시간 (초)
+      description: >
+        Time to wait between issuing mode change and setting fan speed.
+        
+        모드 변경과 팬 속도 설정 사이에 기다릴 시간입니다.
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 10
+          unit_of_measurement: seconds
+          mode: slider
+
+variables:
+  runtime_minutes: !input runtime_minutes
+
+trigger:
+  - platform: state
+    entity_id: !input target_ac
+    from:
+      - "auto"
+      - "cool"
+      - "dry"
+    to: "off"
+    for:
+      seconds: !input post_off_delay
+
+condition:
+  - condition: template
+    value_template: >
+      {% set changed = as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed) %}
+      {{ changed > (60 * runtime_minutes) }}
+
+action:
+  - service: climate.set_hvac_mode
+    target:
+      entity_id: !input target_ac
+    data:
+      hvac_mode: fan_only
+
+  - delay:
+      seconds: !input command_gap
+
+  - service: climate.set_fan_mode
+    target:
+      entity_id: !input target_ac
+    data:
+      fan_mode: high
+
+  - delay:
+      minutes: !input wind_duration
+
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input target_ac
+            state: fan_only
+        sequence:
+          - service: climate.set_hvac_mode
+            target:
+              entity_id: !input target_ac
+            data:
+              hvac_mode: "off"
+
+mode: restart
